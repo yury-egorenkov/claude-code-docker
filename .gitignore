@@ -1,0 +1,12 @@
+# Blacklist -> whitelist -> blacklist -> ... -> ...
+
+.DS_Store
+/*
+
+!/*.default.properties
+!/.*ignore
+!/dockerfile
+!/*.yml
+!/*.yaml
+!/init-firewall.sh
+!/devcontainer.json
