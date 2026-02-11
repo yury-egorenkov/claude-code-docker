@@ -1,9 +1,12 @@
+https://egorsky.com
+
 # Claude Code Docker
 
 Quickly run Claude code in a container—minimal setup required.
 
 ## Prerequisites
 
+- [Claude Code Cli](https://github.com/anthropics/claude-code)
 - Docker
 - Make
 
