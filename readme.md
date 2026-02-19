@@ -101,20 +101,35 @@ See `devcontainer.json` for details.
 
 ## Multi-Project Workflow
 
-Mount different project directories using the shortcut targets:
-
-```bash
-make back      # mounts ../back
-make front     # mounts ../front
-make docs      # mounts ../docs
-make markups   # mounts ../markups
-```
-
-Or mount any directory:
+Mount any sibling directory as the workspace:
 
 ```bash
 WORKSPACE_DIR=../my-project make docker.run
 ```
+
+### `local.makefile` — personal shortcuts
+
+The repo includes a `local.makefile` with handy targets for projects you switch between often:
+
+```bash
+mk back        # mounts ../back
+mk front       # mounts ../front
+mk docs        # mounts ../docs
+```
+
+Because Make only reads `makefile` by default, you need to point it at `local.makefile` explicitly. Add a small shell helper to your `~/.bashrc` or `~/.zshrc`:
+
+```bash
+mk() { make --makefile=local.makefile "$@"; }
+```
+
+Or invoke it directly:
+
+```bash
+make -f local.makefile back
+```
+
+Edit `local.makefile` to add your own project shortcuts — it is git-ignored and won't conflict with the main `makefile`.
 
 ## All Commands
 

@@ -24,6 +24,8 @@ DOCKER_FILE ?= dockerfile
 
 DOCKER_ENV := --env-file .env.default.properties --env-file $(or $(CONF),.)/.env.properties
 
+DOCKER_NETWORK ?= bridge
+
 WORKSPACE_DIR ?= app
 WORK_DIR := $(PWD)/$(WORKSPACE_DIR)
 
@@ -51,7 +53,7 @@ docker.build:
 docker.run.internal:
 	$(eval export)
 	echo $(DOCKER_RUN)
-	docker run $(args) $(DOCKER_ENV) -v=$(PWD)/node:/home/node -v=$(WORK_DIR):$(WORKSPACE) --network podman $(DOCKER_TAG_LATEST)
+	docker run $(args) $(DOCKER_ENV) -v=$(PWD)/node:/home/node -v=$(WORK_DIR):$(WORKSPACE)/project -v=$(WORK_DIR)/../docs:$(WORKSPACE)/docs  --network $(DOCKER_NETWORK) $(DOCKER_TAG_LATEST)
 
 docker.run:
 	$(MAKE) docker.run.internal args="-it"
@@ -67,15 +69,3 @@ docker.clean:
 
 docker.ls:
 	docker images --filter "label=project=$(DOCKER_LABEL)"
-
-back:
-	$(MAKE) docker.run WORK_DIR=$(PWD)/../back
-
-front:
-	$(MAKE) docker.run WORK_DIR=$(PWD)/../front
-
-docs:
-	$(MAKE) docker.run WORK_DIR=$(PWD)/../docs
-
-markups:
-	$(MAKE) docker.run WORK_DIR=$(PWD)/../markups
