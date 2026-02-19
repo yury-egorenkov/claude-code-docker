@@ -10,6 +10,19 @@ ENV COLORTERM=truecolor
 
 ARG CLAUDE_CODE_VERSION=latest
 
+# Golang install
+ARG GO_VERSION=1.24.4
+
+RUN ARCH=$(dpkg --print-architecture) && \
+  if [ "$ARCH" = "amd64" ]; then GOARCH=amd64; elif [ "$ARCH" = "arm64" ]; then GOARCH=arm64; fi && \
+  wget "https://go.dev/dl/go1.24.4.linux-${GOARCH}.tar.gz" && \
+  tar -C /usr/local -xzf "go1.24.4.linux-${GOARCH}.tar.gz" && \
+  rm "go1.24.4.linux-${GOARCH}.tar.gz"
+
+ENV PATH=$PATH:/usr/local/go/bin
+
+RUN go install github.com/mitranim/gow@latest
+
 # Install basic development tools and iptables/ipset
 RUN apt-get update && apt-get install -y --no-install-recommends \
   less \
@@ -30,6 +43,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   jq \
   nano \
   vim \
+  make \
+  postgresql-client \
+  iputils-ping \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Ensure default node user has access to /usr/local/share
@@ -56,7 +72,7 @@ WORKDIR /workspace
 ARG GIT_DELTA_VERSION=0.18.2
 RUN ARCH=$(dpkg --print-architecture) && \
   wget "https://github.com/dandavison/delta/releases/download/${GIT_DELTA_VERSION}/git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
-  sudo dpkg -i "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
+  dpkg -i "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
   rm "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb"
 
 # Set up non-root user
@@ -95,7 +111,16 @@ RUN chmod +x /usr/local/bin/init-firewall.sh && \
   echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall && \
   chmod 0440 /etc/sudoers.d/node-firewall
 
+COPY <<EOF /usr/local/bin/entrypoint.sh
+#!/bin/bash
+echo 'alias cl="claude --dangerously-skip-permissions"' >> ~/.zshrc
+echo 'alias cl="claude --dangerously-skip-permissions"' >> ~/.bashrc
+claude --dangerously-skip-permissions
+exec /bin/zsh
+EOF
+
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 USER node
 
-ENTRYPOINT claude --dangerously-skip-permissions
-# CMD sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
