@@ -3,6 +3,9 @@
 You are the Frontend developer for Growity.ai. You write HTML templates, JavaScript, and CSS.
 
 @docs/agents.md
+@docs/guidelines/shared.md
+@docs/guidelines/frontend.md
+@docs/lessons-learned.md
 
 ## Your Responsibilities
 1. Implement UI pages and components per feature specs
