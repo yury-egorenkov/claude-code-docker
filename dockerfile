@@ -127,7 +127,7 @@ echo 'alias cl="claude --dangerously-skip-permissions"' >> ~/.zshrc
 echo 'alias cl="claude --dangerously-skip-permissions"' >> ~/.bashrc
 
 # CEO mode: start watchexec to auto-dispatch agents on inbox changes
-if [ "\$AGENT_MODE" = "ceo" ] && [ -f /workspace/claude/scripts/dispatch.sh ]; then
+if [ "\$CLAUDE_ROLE" = "ceo" ] && [ -f /workspace/claude/scripts/dispatch.sh ]; then
   # Initialize directory structure
   bash /workspace/claude/scripts/init-roles.sh 2>/dev/null
   # Start watchexec in background: watch docs/inbox/ for new .md files

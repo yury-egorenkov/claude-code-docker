@@ -7,9 +7,10 @@ set -euo pipefail
 FILE="$1"
 ROLE=$(echo "$FILE" | sed 's|.*/inbox/\([^/]*\)/.*|\1|')
 
-# Skip: processed messages, non-markdown, CEO (interactive), broadcasts, unknown
+# Skip: processed messages, non-markdown, CEO (interactive), broadcasts, persistent task files
 [[ "$FILE" == */done/* ]]   && exit 0
 [[ "$FILE" != *.md ]]       && exit 0
+[[ "$FILE" == */task.md ]]  && exit 0
 [[ "$ROLE" == "ceo" ]]      && exit 0
 [[ "$ROLE" == "all" ]]      && exit 0
 
@@ -41,7 +42,7 @@ if [ -f "$MEMORY_FILE" ]; then
 $(cat "$MEMORY_FILE")"
 fi
 
-TASK_PROMPT="Check your inbox at /workspace/docs/inbox/$ROLE/ (skip done/ subfolder).
+TASK_PROMPT="Check your inbox at /workspace/docs/inbox/$ROLE/ (skip done/ subfolder and task.md).
 Process ALL pending messages in chronological order (oldest first).
 For each message:
 1. Read and understand the task
@@ -66,13 +67,20 @@ fi
 
 echo "[$(date)] [$ROLE] Processing inbox (triggered by $FILE)" >> "$LOG_DIR/$ROLE.log"
 
-if [ -n "$MOUNTS" ]; then
+# Test if bwrap works with the role's actual mount profile
+USE_BWRAP=false
+if [ -n "$MOUNTS" ] && bwrap $MOUNTS -- true 2>/dev/null; then
+    USE_BWRAP=true
+fi
+
+if [ "$USE_BWRAP" = true ]; then
     bwrap $MOUNTS \
         -- claude -p "$TASK_PROMPT" \
         --append-system-prompt "$(cat "$ROLE_CLAUDE")" \
         --dangerously-skip-permissions \
         2>&1 | tee -a "$LOG_DIR/$ROLE.log"
 else
+    [ -n "$MOUNTS" ] && echo "[$(date)] [$ROLE] bwrap unavailable, running without sandbox" >> "$LOG_DIR/$ROLE.log"
     claude -p "$TASK_PROMPT" \
         --append-system-prompt "$(cat "$ROLE_CLAUDE")" \
         --dangerously-skip-permissions \

@@ -55,10 +55,12 @@ docker.run.internal:
 	echo $(DOCKER_RUN)
 	docker run $(args) $(DOCKER_ENV) \
 		-v=$(PWD)/node:/home/node \
+		-v=$(WORK_DIR)/claude/roles/$(CLAUDE_ROLE)/claude.md:$(WORKSPACE)/CLAUDE.md \
 		-v=$(WORK_DIR):$(WORKSPACE) \
 		--network $(DOCKER_NETWORK) $(DOCKER_TAG_LATEST)
 
 docker.run:
+	echo $(CLAUDE_ROLE)
 	$(MAKE) docker.run.internal args="-it"
 
 docker.run.d:

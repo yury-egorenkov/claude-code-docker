@@ -4,7 +4,7 @@
 echo "=== Agent Status ==="
 echo
 
-for role in ceo cto pm frontend backend qa marketing designer video support debops; do
+for role in ceo backend frontend; do
     INBOX="/workspace/docs/inbox/$role"
     LOCK="/tmp/claude-role-$role.lock"
     PENDING=$(find "$INBOX" -maxdepth 1 -name "*.md" 2>/dev/null | wc -l)

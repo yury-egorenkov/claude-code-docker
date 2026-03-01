@@ -2,7 +2,7 @@
 # init-roles.sh — create directory structure for all roles
 set -euo pipefail
 
-ROLES="ceo cto pm frontend backend qa marketing designer video support debops"
+ROLES="ceo backend frontend"
 
 # Verify git repos exist
 for repo in docs back front claude imaginary; do
