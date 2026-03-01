@@ -27,7 +27,18 @@ DOCKER_ENV := --env-file .env.default.properties --env-file $(or $(CONF),.)/.env
 DOCKER_NETWORK ?= bridge
 
 WORKSPACE_DIR ?= app
-WORK_DIR := $(PWD)/$(WORKSPACE_DIR)
+
+ifdef WORKSPACE_DIR
+	DOCKER_VOLUMES = \
+		-v=$(PWD)/node:/home/node \
+		-v=$(PWD)/../docs:$(WORKSPACE)/docs \
+		-v=$(PWD)/../$(WORKSPACE_DIR)/claude.md:$(WORKSPACE)/CLAUDE.md \
+		-v=$(PWD)/../$(WORKSPACE_DIR):$(WORKSPACE)/code
+else
+	DOCKER_VOLUMES = \
+		-v=$(PWD)/node:/home/node \
+		-v=$(PWD)/../:$(WORKSPACE)
+endif
 
 default: docker
 
@@ -53,7 +64,10 @@ docker.build:
 docker.run.internal:
 	$(eval export)
 	echo $(DOCKER_RUN)
-	docker run $(args) $(DOCKER_ENV) -v=$(PWD)/node:/home/node -v=$(WORK_DIR):$(WORKSPACE)/project -v=$(WORK_DIR)/../docs:$(WORKSPACE)/docs  --network $(DOCKER_NETWORK) $(DOCKER_TAG_LATEST)
+	docker run $(args) $(DOCKER_ENV) \
+		$(DOCKER_VOLUMES) \
+		--network $(DOCKER_NETWORK) \
+		$(DOCKER_TAG_LATEST)
 
 docker.run:
 	$(MAKE) docker.run.internal args="-it"
