@@ -55,6 +55,19 @@ docker.run.internal:
 	echo $(DOCKER_RUN)
 	docker run $(args) $(DOCKER_ENV) -v=$(PWD)/node:/home/node -v=$(WORK_DIR):$(WORKSPACE)/project -v=$(WORK_DIR)/../docs:$(WORKSPACE)/docs  --network $(DOCKER_NETWORK) $(DOCKER_TAG_LATEST)
 
+# CEO mode: mount all repos separately. Requires PROJECT_ROOT (parent of back/, front/, docs/, claude/).
+docker.run.ceo:
+	$(eval export)
+	docker run $(args) $(DOCKER_ENV) \
+		-e AGENT_MODE=ceo \
+		-v=$(PWD)/node:/home/node \
+		-v=$(PROJECT_ROOT)/back:$(WORKSPACE)/back \
+		-v=$(PROJECT_ROOT)/front:$(WORKSPACE)/front \
+		-v=$(PROJECT_ROOT)/docs:$(WORKSPACE)/docs \
+		-v=$(PROJECT_ROOT)/imaginary:$(WORKSPACE)/imaginary \
+		-v=$(PROJECT_ROOT)/claude:$(WORKSPACE)/claude \
+		--network $(DOCKER_NETWORK) $(DOCKER_TAG_LATEST)
+
 docker.run:
 	$(MAKE) docker.run.internal args="-it"
 

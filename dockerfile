@@ -46,7 +46,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   make \
   postgresql-client \
   iputils-ping \
+  bubblewrap \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install watchexec for file-based agent dispatch
+ARG WATCHEXEC_VERSION=2.2.1
+RUN ARCH=$(dpkg --print-architecture) && \
+  if [ "$ARCH" = "amd64" ]; then WARCH=x86_64; elif [ "$ARCH" = "arm64" ]; then WARCH=aarch64; fi && \
+  wget "https://github.com/watchexec/watchexec/releases/download/v${WATCHEXEC_VERSION}/watchexec-${WATCHEXEC_VERSION}-${WARCH}-unknown-linux-musl.tar.xz" && \
+  tar -xf "watchexec-${WATCHEXEC_VERSION}-${WARCH}-unknown-linux-musl.tar.xz" && \
+  mv "watchexec-${WATCHEXEC_VERSION}-${WARCH}-unknown-linux-musl/watchexec" /usr/local/bin/ && \
+  rm -rf "watchexec-${WATCHEXEC_VERSION}-${WARCH}-unknown-linux-musl" "watchexec-${WATCHEXEC_VERSION}-${WARCH}-unknown-linux-musl.tar.xz"
 
 # Ensure default node user has access to /usr/local/share
 RUN mkdir -p /usr/local/share/npm-global && \
@@ -115,6 +125,20 @@ COPY <<EOF /usr/local/bin/entrypoint.sh
 #!/bin/bash
 echo 'alias cl="claude --dangerously-skip-permissions"' >> ~/.zshrc
 echo 'alias cl="claude --dangerously-skip-permissions"' >> ~/.bashrc
+
+# CEO mode: start watchexec to auto-dispatch agents on inbox changes
+if [ "\$AGENT_MODE" = "ceo" ] && [ -f /workspace/claude/scripts/dispatch.sh ]; then
+  # Initialize directory structure
+  bash /workspace/claude/scripts/init-roles.sh 2>/dev/null
+  # Start watchexec in background: watch docs/inbox/ for new .md files
+  # On any change, dispatch-scan.sh checks all inboxes and triggers roles with pending messages.
+  # No restart mode — let scan finish, then re-trigger on queued changes.
+  watchexec -w /workspace/docs/inbox/ --exts md -- \
+    bash /workspace/claude/scripts/dispatch-scan.sh \
+    >> /workspace/docs/tracking/logs/watchexec.log 2>&1 &
+  echo "watchexec started (PID \$!) — watching docs/inbox/"
+fi
+
 claude --dangerously-skip-permissions
 exec /bin/zsh
 EOF

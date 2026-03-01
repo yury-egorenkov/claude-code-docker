@@ -10,3 +10,9 @@
 !/*.yaml
 !/init-firewall.sh
 !/devcontainer.json
+!/makefile
+!/local.makefile
+!/readme.md
+!/scripts/
+!/roles/
+!/memory/
