@@ -1,8 +1,8 @@
-https://egorsky.com
-
 # Claude Code Docker
 
 Run [Claude Code](https://github.com/anthropics/claude-code) in a sandboxed Docker container with network restrictions, persistent config, and batteries-included dev tooling.
+
+Built with this setup and running in production: [growity.ai](https://growity.ai) and [egorsky.com](https://egorsky.com).
 
 ## Why
 
@@ -101,35 +101,20 @@ See `devcontainer.json` for details.
 
 ## Multi-Project Workflow
 
-Mount any sibling directory as the workspace:
+Mount different project directories using the shortcut targets:
+
+```bash
+make back      # mounts ../back
+make front     # mounts ../front
+make docs      # mounts ../docs
+make markups   # mounts ../markups
+```
+
+Or mount any directory:
 
 ```bash
 WORKSPACE_DIR=../my-project make docker.run
 ```
-
-### `local.makefile` — personal shortcuts
-
-The repo includes a `local.makefile` with handy targets for projects you switch between often:
-
-```bash
-mk back        # mounts ../back
-mk front       # mounts ../front
-mk docs        # mounts ../docs
-```
-
-Because Make only reads `makefile` by default, you need to point it at `local.makefile` explicitly. Add a small shell helper to your `~/.bashrc` or `~/.zshrc`:
-
-```bash
-mk() { make --makefile=local.makefile "$@"; }
-```
-
-Or invoke it directly:
-
-```bash
-make -f local.makefile back
-```
-
-Edit `local.makefile` to add your own project shortcuts — it is git-ignored and won't conflict with the main `makefile`.
 
 ## All Commands
 
@@ -141,6 +126,39 @@ make docker.run.d    # detached run
 make docker.clean    # remove untagged project images
 make docker.ls       # list project images
 make help            # show all available commands
+```
+
+### Local Shortcuts
+
+For personal shortcuts that shouldn't be committed, create a `local.makefile`:
+
+```
+# DO NOT EVER INCLUDE IN GIT
+# local.makefile — personal shortcuts, not tracked by the project makefile.
+#
+# Since Make only reads `makefile` (or `Makefile`) by default, you need to
+# tell it about this file explicitly. The easiest way is a tiny shell helper:
+#
+#   mk() { make --makefile=local.makefile "$@"; }
+#
+# Drop that line in your ~/.bashrc or ~/.zshrc, then use it like:
+#
+#   mk back        # mount ../back and start Claude Code
+#   mk front       # mount ../front
+#   mk docs        # mount ../docs
+#
+# You can also invoke it directly without the helper:
+#
+#   make -f local.makefile back
+
+back:
+  $(MAKE) docker.run WORKSPACE_DIR=back
+
+front:
+  $(MAKE) docker.run WORKSPACE_DIR=front
+
+ceo:
+  $(MAKE) docker.run
 ```
 
 ## License
