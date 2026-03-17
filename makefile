@@ -30,14 +30,16 @@ WORKSPACE_DIR ?= app
 
 ifdef WORKSPACE_DIR
 	DOCKER_VOLUMES = \
-		-v=$(PWD)/node:/home/node \
+		-v=$(PWD)/node/.claude:/home/node/.claude \
+		-v=$(PWD)/node/.claude.json:/home/node/.claude.json \
 		-v=$(PWD)/../docs:$(WORKSPACE)/docs \
 		-v=$(PWD)/../$(WORKSPACE_DIR)/claude.md:$(WORKSPACE)/CLAUDE.md \
 		-v=$(PWD)/../$(WORKSPACE_DIR):$(WORKSPACE)/code
 else
 	DOCKER_VOLUMES = \
-		-v=$(PWD)/node:/home/node \
-		-v=$(PWD)/../:$(WORKSPACE)
+		-v=$(PWD)/node/.claude:/home/node/.claude \
+		-v=$(PWD)/node/.claude.json:/home/node/.claude.json \
+		-v=$(PWD):$(WORKSPACE)
 endif
 
 default: docker
