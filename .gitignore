@@ -10,3 +10,4 @@
 !/*.yaml
 !/init-firewall.sh
 !/devcontainer.json
+!/.bashrc

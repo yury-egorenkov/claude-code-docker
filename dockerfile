@@ -1,4 +1,4 @@
-FROM node:20
+FROM golang:1.24-alpine
 
 ARG LABEL
 LABEL mylabel=${LABEL}
@@ -10,28 +10,23 @@ ENV COLORTERM=truecolor
 
 ARG CLAUDE_CODE_VERSION=latest
 
-# Golang install
-ARG GO_VERSION=1.24.4
-
-RUN ARCH=$(dpkg --print-architecture) && \
-  if [ "$ARCH" = "amd64" ]; then GOARCH=amd64; elif [ "$ARCH" = "arm64" ]; then GOARCH=arm64; fi && \
-  wget "https://go.dev/dl/go1.24.4.linux-${GOARCH}.tar.gz" && \
-  tar -C /usr/local -xzf "go1.24.4.linux-${GOARCH}.tar.gz" && \
-  rm "go1.24.4.linux-${GOARCH}.tar.gz"
-
-ENV PATH=$PATH:/usr/local/go/bin
-
 RUN go install github.com/mitranim/gow@latest
 
-# Install basic development tools and iptables/ipset
-RUN apt-get update && apt-get install -y --no-install-recommends less git procps sudo fzf zsh man-db unzip gnupg2 gh iptables ipset iproute2 dnsutils aggregate jq nano vim make postgresql-client iputils-ping && apt-get clean && rm -rf /var/lib/apt/lists/*
+# Install Node.js and packages
+RUN apk add --no-cache \
+  nodejs npm \
+  bash less git procps sudo fzf jq vim make curl \
+  iptables ipset iproute2 bind-tools \
+  postgresql-client iputils github-cli gnupg
 
+# Create non-root user (golang-alpine doesn't have 'node' user)
 ARG USERNAME=node
+RUN addgroup -S node && adduser -S -G node -h /home/node -s /bin/bash node
 
-# Persist bash history.
-RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history"&& mkdir /commandhistory \
-  && touch /commandhistory/.bash_history \
-  && chown -R $USERNAME /commandhistory
+# Persist shell history
+RUN mkdir -p /commandhistory && \
+  touch /commandhistory/.shell_history && \
+  chown -R $USERNAME /commandhistory
 
 # Set `DEVCONTAINER` environment variable to help with orientation
 ENV DEVCONTAINER=true
@@ -42,39 +37,24 @@ RUN mkdir -p /workspace /home/node/.claude && \
 
 WORKDIR /workspace
 
-ARG GIT_DELTA_VERSION=0.18.2
-RUN ARCH=$(dpkg --print-architecture) && \
-  wget "https://github.com/dandavison/delta/releases/download/${GIT_DELTA_VERSION}/git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
-  dpkg -i "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
-  rm "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb"
-
 # Set up non-root user
 USER node
 
 # Claude Code native binary path
-ENV PATH=$PATH:/home/node/.local/bin
+ENV PATH="/home/node/.local/bin:$PATH"
 
-# Set the default shell to zsh rather than sh
-ENV SHELL=/bin/zsh
+# Set the default shell to bash
+ENV SHELL=/bin/bash
 
-# Set the default editor and visual
+# Set the default editor
 ENV EDITOR=vim
 ENV VISUAL=vim
 
-# Default powerline10k theme
-ARG ZSH_IN_DOCKER_VERSION=1.2.0
-RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v${ZSH_IN_DOCKER_VERSION}/zsh-in-docker.sh)" -- \
-  -p git \
-  -p fzf \
-  -a "source /usr/share/doc/fzf/examples/key-bindings.zsh" \
-  -a "source /usr/share/doc/fzf/examples/completion.zsh" \
-  -a "export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
-  -x
+# Bash config
+COPY .bashrc /home/node/.bashrc
 
 # Install Claude Code (native installer)
 RUN curl -fsSL https://claude.ai/install.sh | bash -s ${CLAUDE_CODE_VERSION}
-
-ENV PATH="/home/node/.local/bin:$PATH"
 
 # Copy and set up firewall script
 COPY init-firewall.sh /usr/local/bin/
@@ -85,16 +65,6 @@ RUN chmod +x /usr/local/bin/init-firewall.sh && \
   echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall && \
   chmod 0440 /etc/sudoers.d/node-firewall
 
-COPY <<EOF /usr/local/bin/entrypoint.sh
-#!/bin/bash
-echo 'alias cl="claude --dangerously-skip-permissions"' >> ~/.zshrc
-echo 'alias cl="claude --dangerously-skip-permissions"' >> ~/.bashrc
-claude --dangerously-skip-permissions
-exec /bin/zsh
-EOF
-
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
 USER node
 
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["bash", "-c", "claude --dangerously-skip-permissions; exec /bin/bash"]
