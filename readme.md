@@ -4,6 +4,8 @@ Run [Claude Code](https://github.com/anthropics/claude-code) in a sandboxed Dock
 
 Built with this setup and running in production: [growity.ai](https://growity.ai) and [egorsky.com](https://egorsky.com).
 
+Discussion: https://www.reddit.com/r/micro_saas/comments/1rju8sd/i_replaced_my_dev_team_with_3_claude_code_agents/
+
 ## Why
 
 Running an AI coding agent with full shell access on your host machine is a trust exercise. This project puts Claude Code inside a locked-down container where:
