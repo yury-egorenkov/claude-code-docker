@@ -1,10 +1,12 @@
+
+
 # Claude Code Docker
 
 Run [Claude Code](https://github.com/anthropics/claude-code) in a sandboxed Docker container with network restrictions, persistent config, and batteries-included dev tooling.
 
 Built with this setup and running in production: [growity.ai](https://growity.ai) and [egorsky.com](https://egorsky.com).
 
-Discussion (300+ upvites): https://www.reddit.com/r/micro_saas/comments/1rju8sd/i_replaced_my_dev_team_with_3_claude_code_agents/
+Discussion (300+ upvotes): https://www.reddit.com/r/micro_saas/comments/1rju8sd/i_replaced_my_dev_team_with_3_claude_code_agents/
 
 ## Why
 
